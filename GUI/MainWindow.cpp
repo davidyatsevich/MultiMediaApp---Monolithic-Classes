@@ -92,7 +92,7 @@ void MainWindow::requestPermissions()
         }
     }
 #else
-    m_recordingTab->initializeCamera();
+    m_mainTabs->initializeCamera();
 #endif
 }
 
