@@ -79,8 +79,8 @@ if(APPLE)
        Qt6::Multimedia
        Qt6::MultimediaWidgets
        Qt6::Sql
-       $ENV{HOME}/Qt/6.10.2/macos/plugins/permissions/libqdarwincamerapermission.a
-       $ENV{HOME}/Qt/6.10.2/macos/plugins/permissions/libqdarwinmicrophonepermission.a
+       $ENV{HOME}/Qt/6.11.0/macos/plugins/permissions/libqdarwincamerapermission.a
+       $ENV{HOME}/Qt/6.11.0/macos/plugins/permissions/libqdarwinmicrophonepermission.a
        "-framework AVFoundation"
        "-framework CoreMedia"
        "-framework CoreVideo"

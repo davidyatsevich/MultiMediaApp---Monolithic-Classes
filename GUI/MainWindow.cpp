@@ -5,16 +5,22 @@
 #include <QDir>
 #include <QPermission>
 #include <QDebug>
-
+#include <QStandardPaths>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
-      m_database(std::make_shared<SQLite>("MediaStorageImplicit.db"))
+      m_database(std::make_shared<SQLite>(MainWindow::getDatabasePath()))
 {
     ensureStorageDirectoryExists();
     setupUI();
     requestPermissions();
 }
 
+std::string MainWindow::getDatabasePath()
+{
+    QString dbDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(dbDir);
+    return (dbDir + "/MediaStorageImplicit.db").toStdString();
+}
 MainWindow::~MainWindow()
 {
 }

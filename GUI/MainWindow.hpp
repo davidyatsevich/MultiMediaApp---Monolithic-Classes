@@ -19,7 +19,7 @@ private:
     void requestPermissions();
     void ensureStorageDirectoryExists();
     QString getStorageDirectory() const;
-
+    static std::string getDatabasePath();
     // Database and recordings
     std::shared_ptr<SQLite> m_database;
     std::vector<std::shared_ptr<File>> m_recordings;
