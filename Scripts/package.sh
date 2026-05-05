@@ -17,7 +17,12 @@ echo "=== Building ==="
 cmake --build "$BUILD_DIR" --config Release -j$(sysctl -n hw.logicalcpu)
 
 echo "=== Deploying ==="
-bash "$PROJECT_DIR/scripts/deploy.sh"
+bash "$PROJECT_DIR/Scripts/deploy.sh"
 
-echo "=== Opening ==="
-open "$BUILD_DIR/MultiMediaApp.app"
+# echo "=== Opening ==="
+# open "$BUILD_DIR/MultiMediaApp.app"
+
+echo ""
+echo "=== Build Complete ==="
+echo "    DMG: $PROJECT_DIR/Installation/MultiMediaApp.dmg"
+echo "    App: $BUILD_DIR/MultiMediaApp.app"

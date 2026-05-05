@@ -1,9 +1,15 @@
-#!/bin/zsh
+#!/bin/bash
 set -e
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+APP_NAME="MultiMediaApp"
+BUILD_DIR="/Users/davidyatsevich/Desktop/Personal Projects/Side-Portfolio C++/MultiMediaApp - Monolithic Classes/build"
+PROJECT_DIR="/Users/davidyatsevich/Desktop/Personal Projects/Side-Portfolio C++/MultiMediaApp - Monolithic Classes"
+INSTALL_DIR="$PROJECT_DIR/Installation"
 
 APP="/Users/davidyatsevich/Desktop/Personal Projects/Side-Portfolio C++/MultiMediaApp - Monolithic Classes/build/MultiMediaApp.app"
 QT="$HOME/Qt/6.11.0/macos"
+
 
 echo "=== Creating bundle directories ==="
 mkdir -p "$APP/Contents/Frameworks"
@@ -84,6 +90,16 @@ for fw in QtCore QtGui QtWidgets QtMultimedia QtMultimediaWidgets QtSql QtNetwor
         "$BINARY"
 done
 
+echo "=== Fixing bundle rpath ==="
+install_name_tool -delete_rpath \
+    "$HOME/Qt/6.11.0/macos/lib" \
+    "$BINARY" 2>/dev/null || true
+
+install_name_tool -add_rpath \
+    "@executable_path/../Frameworks" \
+    "$BINARY" 2>/dev/null || true
+
+
 echo "=== Converting icon ==="
 ICON_SRC="$SCRIPT_DIR/../Assets/icon.png"
 ICONSET_DIR="$SCRIPT_DIR/../Assets/icon.iconset"
@@ -110,5 +126,35 @@ fi
 
 echo "=== Signing ==="
 codesign --deep --force --sign - "$APP"
+
+echo "=== Creating DMG ==="
+DMG_PATH="$BUILD_DIR/$APP_NAME.dmg"
+DMG_STAGING="$BUILD_DIR/dmg_staging"
+
+# Create staging directory
+mkdir -p "$DMG_STAGING"
+cp -R "$APP" "$DMG_STAGING/"
+
+# Create symlink to Applications folder
+ln -sf /Applications "$DMG_STAGING/Applications"
+
+# Create DMG
+hdiutil create \
+    -volname "$APP_NAME" \
+    -srcfolder "$DMG_STAGING" \
+    -ov \
+    -format UDZO \
+    "$DMG_PATH"
+
+# Cleanup staging
+rm -rf "$DMG_STAGING"
+
+echo "=== Copying to Installation folder ==="
+INSTALL_DIR="$PROJECT_DIR/Installation"
+mkdir -p "$INSTALL_DIR"
+cp "$DMG_PATH" "$INSTALL_DIR/"
+echo "=== Installation folder: $INSTALL_DIR ==="
+
+echo "=== DMG created at: $DMG_PATH ==="
 
 echo "=== Done ==="
