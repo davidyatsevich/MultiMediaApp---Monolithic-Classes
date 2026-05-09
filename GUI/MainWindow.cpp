@@ -118,9 +118,7 @@ void MainWindow::ensureStorageDirectoryExists()
 
 QString MainWindow::getStorageDirectory() const
 {
-    QString appDir = QCoreApplication::applicationDirPath();
-    QDir dir(appDir);
-    dir.cdUp();
-    QString storagePath = dir.filePath("Backend/MediaStorageExplicit");
-    return storagePath;
+    QString storageDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/MediaStorageExplicit";
+    QDir().mkpath(storageDir);
+    return storageDir;
 }
