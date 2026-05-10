@@ -14,6 +14,8 @@ mkdir -p "$BUILD_DIR"
 echo "=== Configuring ==="
 if [ "$PLATFORM" = "Darwin" ]; then
     CMAKE_PREFIX="$HOME/Qt/6.11.0/macos"
+elif [ -d "$HOME/Qt/6.10.2/gcc_arm64"]; then
+    CMAKE_PREFIX="$HOME/Qt/6.10.2/gcc_arm64"
 else
     CMAKE_PREFIX="$HOME/Qt/6.10.2/gcc_64"
 fi
