@@ -6,8 +6,10 @@
 #include "SQLite.hpp"
 #include "NestedRecordingTabs.hpp"
 #include "NestedEditingTabs.hpp"
+#include "ControllerTab.hpp"
 #include "File.hpp"
 #include "VideoPlayerWindow.hpp"
+#include "Recorders.hpp"
 
 #include <QComboBox>
 #include <QPushButton>
@@ -28,12 +30,16 @@ public:
     ~MainTabs();
 
 public slots:
-    void updateSelectors(); // formerly EditTab::updateSelectors + PlaybackTab::updateSelector
-    void refreshTable();    // formerly StorageTab::refreshTable
-    void initializeCamera();
+    void updateSelectors();
+    void refreshTable();
+    void onCameraPermissionResult(bool granted);
+    void onMicrophonePermissionResult(bool granted);
+
 signals:
-    void recordingSaved();    // formerly RecordingTab::recordingSaved
-    void recordingsChanged(); // formerly StorageTab::recordingsChanged
+    void recordingSaved();
+    void recordingsChanged();
+    void cameraPermissionRequested();
+    void microphonePermissionRequested();
 
 private slots:
     void playRecording();
@@ -49,6 +55,13 @@ private slots:
 private:
     void setupUI();
     void loadRecordings();
+
+    // --- Shared recorders (owned here, passed to ControllerTab + NestedRecordingTabs) ---
+    VideoRecorder *m_videoRecorder;
+    AudioRecorder *m_audioRecorder;
+
+    // --- Controller tab ---
+    ControllerTab *m_controllerTab;
 
     // --- Recording tab ---
     QWidget *m_recordingTab;

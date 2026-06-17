@@ -211,3 +211,44 @@ void VideoRecorder::onVideoFrameChanged(const QVideoFrame &frame)
 {
     emit videoFrameChanged(frame);
 }
+
+// --- AudioRecorder: standalone mic toggle ---
+void AudioRecorder::setMicEnabled(bool enabled)
+{
+    if (enabled == m_micEnabled)
+        return;
+
+    if (enabled)
+    {
+        if (!m_audioInput)
+            m_audioInput = new QAudioInput(this);
+        m_captureSession->setAudioInput(m_audioInput);
+    }
+    else
+    {
+        // Detach the input so the OS mic indicator turns off when not recording
+        if (!m_isRecording)
+            m_captureSession->setAudioInput(nullptr);
+    }
+
+    m_micEnabled = enabled;
+    emit micEnabledChanged(enabled);
+}
+
+// --- VideoRecorder: standalone camera toggle ---
+void VideoRecorder::setCameraEnabled(bool enabled)
+{
+    if (!m_cameraInitialized || !m_camera)
+        return;
+
+    if (enabled && !m_camera->isActive())
+    {
+        m_camera->start();
+    }
+    else if (!enabled && m_camera->isActive() && !m_isRecording)
+    {
+        m_camera->stop();
+    }
+
+    emit cameraEnabledChanged(m_camera->isActive());
+}

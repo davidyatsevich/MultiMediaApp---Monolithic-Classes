@@ -98,9 +98,9 @@ install_name_tool -add_rpath \
     "$BINARY" 2>/dev/null || true
 
 echo "=== Converting icon ==="
-ICON_SRC="$PROJECT_DIR/Assets/icon.png"
+ICON_SRC="$PROJECT_DIR/Assets/AppIconOff.png"  # shown in Finder/Dock when not running
 ICONSET_DIR="$PROJECT_DIR/Assets/icon.iconset"
-ICNS_PATH="$APP/Contents/Resources/AppIcon.icns"
+ICNS_PATH="$APP/Contents/Resources/AppIcon.icns"  # keep this name to match Info.plist
 
 if [ -f "$ICON_SRC" ]; then
     mkdir -p "$ICONSET_DIR"
@@ -120,6 +120,17 @@ if [ -f "$ICON_SRC" ]; then
 else
     echo "No icon found at $ICON_SRC, skipping"
 fi
+
+echo "=== Copying runtime icons ==="
+for icon in AppIconOn AppIconOff; do
+    SRC="$PROJECT_DIR/Assets/${icon}.png"
+    if [ -f "$SRC" ]; then
+        cp "$SRC" "$APP/Contents/Resources/${icon}.png"
+        echo "  Copied ${icon}.png"
+    else
+        echo "  WARNING: ${icon}.png not found at $SRC"
+    fi
+done
 
 echo "=== Signing ==="
 codesign --deep --force --sign - "$APP"

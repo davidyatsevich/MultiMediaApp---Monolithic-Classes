@@ -22,10 +22,10 @@ public:
     };
 
     explicit NestedRecordingTabs(QWidget *parent, std::shared_ptr<SQLite> database,
-                                 const QString &storageDirectory, Mode mode);
+                                 const QString &storageDirectory, Mode mode,
+                                 VideoRecorder *videoRecorder,
+                                 AudioRecorder *audioRecorder);
     ~NestedRecordingTabs();
-
-    void initializeCamera(); // no-op in Audio mode
 
 signals:
     void recordingSaved();
@@ -41,14 +41,14 @@ private slots:
 
 private:
     void setupUI();
+    void stopRecordingAfterError();
     QString getFileExtension() const;
     QMediaFormat::FileFormat getFileFormat() const;
-    QMediaFormat::AudioCodec getAudioCodec() const; // Audio mode only
-    QMediaFormat::VideoCodec getVideoCodec() const; // Video mode only
+    QMediaFormat::AudioCodec getAudioCodec() const;
+    QMediaFormat::VideoCodec getVideoCodec() const;
 
     Mode m_mode;
 
-    // Shared UI
     QPushButton *m_recordButton;
     QPushButton *m_stopButton;
     QPushButton *m_saveButton;
@@ -57,16 +57,14 @@ private:
     QLineEdit *m_fileNameEdit;
     QComboBox *m_formatSelector;
 
-    // Video-only UI
     QLabel *m_previewLabel = nullptr;
     QComboBox *m_qualitySelector = nullptr;
 
-    // Shared backend
     std::shared_ptr<SQLite> m_database;
     QString m_storageDirectory;
     QString m_currentRecordingPath;
 
-    // Recorders — only one is non-null at a time
-    AudioRecorder *m_audioRecorder = nullptr;
+    // Shared, NOT owned here anymore — passed in from MainTabs
     VideoRecorder *m_videoRecorder = nullptr;
+    AudioRecorder *m_audioRecorder = nullptr;
 };

@@ -41,6 +41,14 @@ mkdir -p "$APPDIR/usr/plugins/multimedia"
 echo "=== Copying binary ==="
 cp "$BUILD_DIR/$APP_NAME" "$APPDIR/usr/bin/"
 
+echo "=== Copying runtime icon (taskbar on-state) ==="
+if [ -f "$PROJECT_DIR/Assets/AppIconOn.png" ]; then
+    cp "$PROJECT_DIR/Assets/AppIconOn.png" "$APPDIR/usr/bin/AppIconOn.png"
+    echo "Copied AppIconOn.png next to binary"
+else
+    echo "WARNING: AppIconOn.png not found, taskbar icon will fall back to default"
+fi
+
 echo "=== Copying Qt libraries ==="
 for lib in QtCore QtGui QtWidgets QtMultimedia QtMultimediaWidgets QtSql QtNetwork QtOpenGL QtDBus QtConcurrent QtOpenGLWidgets QtXcbQpa; do
     cp -r "$QT/lib/lib$lib"*.so* "$APPDIR/usr/lib/" 2>/dev/null || true
@@ -64,13 +72,13 @@ EOF
 cp "$APPDIR/$APP_NAME.desktop" "$APPDIR/usr/share/applications/"
 
 echo "=== Copying icon ==="
-if [ -f "$PROJECT_DIR/Assets/icon.png" ]; then
-    cp "$PROJECT_DIR/Assets/icon.png" "$APPDIR/icon.png"
-    cp "$PROJECT_DIR/Assets/icon.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/icon.png"
+if [ -f "$PROJECT_DIR/Assets/AppIconOff.png" ]; then
+    cp "$PROJECT_DIR/Assets/AppIconOff.png" "$APPDIR/icon.png"
+    cp "$PROJECT_DIR/Assets/AppIconOff.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/icon.png"
     if command -v convert &>/dev/null; then
-        convert "$PROJECT_DIR/Assets/icon.png" -resize 128x128 \
+        convert "$PROJECT_DIR/Assets/AppIconOff.png" -resize 128x128 \
             "$APPDIR/usr/share/icons/hicolor/128x128/apps/icon.png" 2>/dev/null || true
-        convert "$PROJECT_DIR/Assets/icon.png" -resize 64x64 \
+        convert "$PROJECT_DIR/Assets/AppIconOff.png" -resize 64x64 \
             "$APPDIR/usr/share/icons/hicolor/64x64/apps/icon.png" 2>/dev/null || true
     fi
     echo "Icon copied"
@@ -137,8 +145,8 @@ Icon=$APP_NAME
 Categories=AudioVideo;
 DESKTOP
 
-if [ -f "$PROJECT_DIR/Assets/icon.png" ]; then
-    cp "$PROJECT_DIR/Assets/icon.png" %{buildroot}/usr/share/icons/hicolor/256x256/apps/$APP_NAME.png
+if [ -f "$PROJECT_DIR/Assets/AppIconOff.png" ]; then
+    cp "$PROJECT_DIR/Assets/AppIconOff.png" %{buildroot}/usr/share/icons/hicolor/256x256/apps/$APP_NAME.png
 fi
 
 %files

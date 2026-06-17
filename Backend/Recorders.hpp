@@ -23,10 +23,15 @@ public:
     bool isRecording() const { return m_isRecording; }
     QString errorString() const;
 
+    // --- Standalone mic on/off (no recording) ---
+    void setMicEnabled(bool enabled);
+    bool isMicEnabled() const { return m_micEnabled; }
+
 signals:
     void durationChanged(qint64 duration);
     void errorOccurred(const QString &error);
     void recordingStopped();
+    void micEnabledChanged(bool enabled);
 
 private slots:
     void onRecorderError();
@@ -36,7 +41,9 @@ private:
     QMediaCaptureSession *m_captureSession;
     QAudioInput *m_audioInput;
     bool m_isRecording;
+    bool m_micEnabled = false;
 };
+
 class VideoRecorder : public QObject
 {
     Q_OBJECT
@@ -54,12 +61,16 @@ public:
     QString errorString() const;
     QVideoSink *videoSink() const { return m_videoSink; }
 
+    // --- Standalone camera on/off (preview only, no recording) ---
+    void setCameraEnabled(bool enabled);
+
 signals:
     void durationChanged(qint64 duration);
     void errorOccurred(const QString &error);
     void recordingStopped();
     void videoFrameChanged(const QVideoFrame &frame);
     void cameraInitialized(bool success);
+    void cameraEnabledChanged(bool enabled);
 
 private slots:
     void onRecorderError();

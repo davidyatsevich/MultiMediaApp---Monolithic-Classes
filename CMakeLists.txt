@@ -47,10 +47,12 @@ set(BACKEND_SOURCES
 set(GUI_SOURCES
    GUI/MainWindow.cpp
    GUI/MainTabs.cpp
+   GUI/ControllerTab.cpp
    GUI/NestedRecordingTabs.cpp
    GUI/NestedEditingTabs.cpp
    GUI/VideoPlayerWindow.cpp
 )
+
 
 
 # Single main.cpp works on all platforms.
@@ -81,6 +83,7 @@ if(APPLE)
        Qt6::Sql
        $ENV{HOME}/Qt/6.11.0/macos/plugins/permissions/libqdarwincamerapermission.a
        $ENV{HOME}/Qt/6.11.0/macos/plugins/permissions/libqdarwinmicrophonepermission.a
+       "-framework Cocoa"      
        "-framework AVFoundation"
        "-framework CoreMedia"
        "-framework CoreVideo"

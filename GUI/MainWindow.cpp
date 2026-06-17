@@ -6,13 +6,13 @@
 #include <QPermission>
 #include <QDebug>
 #include <QStandardPaths>
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
       m_database(std::make_shared<SQLite>(MainWindow::getDatabasePath()))
 {
     ensureStorageDirectoryExists();
     setupUI();
-    requestPermissions();
 }
 
 std::string MainWindow::getDatabasePath()
@@ -21,6 +21,7 @@ std::string MainWindow::getDatabasePath()
     QDir().mkpath(dbDir);
     return (dbDir + "/MediaStorageImplicit.db").toStdString();
 }
+
 MainWindow::~MainWindow()
 {
 }
@@ -33,72 +34,66 @@ void MainWindow::setupUI()
 
     m_mainTabs = new MainTabs(this, m_database, m_storageDirectory);
     setCentralWidget(m_mainTabs);
+
+    connect(m_mainTabs, &MainTabs::cameraPermissionRequested,
+            this, &MainWindow::requestCameraPermission);
+    connect(m_mainTabs, &MainTabs::microphonePermissionRequested,
+            this, &MainWindow::requestMicrophonePermission);
 }
 
-void MainWindow::requestPermissions()
+void MainWindow::requestCameraPermission()
 {
 #if QT_CONFIG(permissions)
     QCameraPermission cameraPermission;
-    QMicrophonePermission micPermission;
+    auto status = qApp->checkPermission(cameraPermission);
 
-    auto cameraStatus = qApp->checkPermission(cameraPermission);
-    auto micStatus = qApp->checkPermission(micPermission);
-
-    qDebug() << "Camera permission status:" << (int)cameraStatus;
-    qDebug() << "Microphone permission status:" << (int)micStatus;
-
-    if (cameraStatus == Qt::PermissionStatus::Undetermined)
+    if (status == Qt::PermissionStatus::Granted)
     {
-        qDebug() << "Requesting camera permission...";
-        qApp->requestPermission(cameraPermission, this, [this, micPermission](const QPermission &permission)
-                                {
-            if (permission.status() == Qt::PermissionStatus::Granted)
-            {
-                qDebug() << "Camera GRANTED!";
-                qApp->requestPermission(micPermission, this, [this](const QPermission &p)
-                {
-                    if (p.status() == Qt::PermissionStatus::Granted)
-                    {
-                        qDebug() << "Microphone GRANTED!";
-                        m_mainTabs->initializeCamera();
-                    }
-                    else
-                    {
-                        qDebug() << "Microphone DENIED!";
-                    }
-                });
-            }
-            else
-            {
-                qDebug() << "Camera DENIED!";
-            } });
+        m_mainTabs->onCameraPermissionResult(true);
+        return;
     }
-    else if (cameraStatus == Qt::PermissionStatus::Granted)
+
+    if (status == Qt::PermissionStatus::Denied)
     {
-        qDebug() << "Camera already granted";
-        if (micStatus == Qt::PermissionStatus::Undetermined)
-        {
-            qDebug() << "Requesting microphone permission...";
-            qApp->requestPermission(micPermission, this, [this](const QPermission &p)
-                                    {
-                if (p.status() == Qt::PermissionStatus::Granted)
-                {
-                    qDebug() << "Microphone GRANTED!";
-                    m_mainTabs->initializeCamera();
-                }
-                else
-                {
-                    qDebug() << "Microphone DENIED!";
-                } });
-        }
-        else if (micStatus == Qt::PermissionStatus::Granted)
-        {
-            qDebug() << "Both permissions already granted!";
-            m_mainTabs->initializeCamera();
-        }
+        m_mainTabs->onCameraPermissionResult(false);
+        return;
     }
+
+    qApp->requestPermission(cameraPermission, this, [this](const QPermission &permission)
+                            {
+        bool granted = permission.status() == Qt::PermissionStatus::Granted;
+        qDebug() << "Camera permission:" << (granted ? "GRANTED" : "DENIED");
+        m_mainTabs->onCameraPermissionResult(granted); });
 #else
-    m_mainTabs->initializeCamera();
+    m_mainTabs->onCameraPermissionResult(true);
+#endif
+}
+
+void MainWindow::requestMicrophonePermission()
+{
+#if QT_CONFIG(permissions)
+    QMicrophonePermission micPermission;
+    auto status = qApp->checkPermission(micPermission);
+
+    if (status == Qt::PermissionStatus::Granted)
+    {
+        m_mainTabs->onMicrophonePermissionResult(true);
+        return;
+    }
+
+    if (status == Qt::PermissionStatus::Denied)
+    {
+        m_mainTabs->onMicrophonePermissionResult(false);
+        return;
+    }
+
+    qApp->requestPermission(micPermission, this, [this](const QPermission &permission)
+                            {
+        bool granted = permission.status() == Qt::PermissionStatus::Granted;
+        qDebug() << "Microphone permission:" << (granted ? "GRANTED" : "DENIED");
+        m_mainTabs->onMicrophonePermissionResult(granted); });
+#else
+    m_mainTabs->onMicrophonePermissionResult(true);
 #endif
 }
 

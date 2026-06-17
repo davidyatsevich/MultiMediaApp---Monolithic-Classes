@@ -11,12 +11,14 @@
 #include <QVideoFrameFormat>
 
 NestedRecordingTabs::NestedRecordingTabs(QWidget *parent, std::shared_ptr<SQLite> database,
-                                         const QString &storageDirectory, Mode mode)
-    : QWidget(parent), m_database(database), m_storageDirectory(storageDirectory), m_mode(mode)
+                                         const QString &storageDirectory, Mode mode,
+                                         VideoRecorder *videoRecorder,
+                                         AudioRecorder *audioRecorder)
+    : QWidget(parent), m_database(database), m_storageDirectory(storageDirectory), m_mode(mode),
+      m_videoRecorder(videoRecorder), m_audioRecorder(audioRecorder)
 {
     if (m_mode == Mode::Audio)
     {
-        m_audioRecorder = new AudioRecorder(this);
         connect(m_audioRecorder, &AudioRecorder::durationChanged,
                 this, &NestedRecordingTabs::onDurationChanged);
         connect(m_audioRecorder, &AudioRecorder::errorOccurred,
@@ -24,7 +26,6 @@ NestedRecordingTabs::NestedRecordingTabs(QWidget *parent, std::shared_ptr<SQLite
     }
     else
     {
-        m_videoRecorder = new VideoRecorder(this);
         connect(m_videoRecorder, &VideoRecorder::durationChanged,
                 this, &NestedRecordingTabs::onDurationChanged);
         connect(m_videoRecorder, &VideoRecorder::errorOccurred,
@@ -152,11 +153,11 @@ void NestedRecordingTabs::setupUI()
     layout->addStretch();
 }
 
-void NestedRecordingTabs::initializeCamera()
-{
-    if (m_mode == Mode::Video)
-        m_videoRecorder->initializeCamera();
-}
+// void NestedRecordingTabs::initializeCamera()
+// {
+//     if (m_mode == Mode::Video)
+//         m_videoRecorder->initializeCamera();
+// }
 
 // ─── Recording control ────────────────────────────────────────────────────────
 
@@ -173,22 +174,51 @@ void NestedRecordingTabs::startRecording()
 
     if (m_mode == Mode::Audio)
     {
+        // No standalone "is mic ready" check exists yet on AudioRecorder beyond
+        // isMicEnabled(), and startRecording() itself doesn't gate on permission —
+        // it just opens the device. If that fails, errorOccurred() fires via
+        // onRecordingError(), which we now also reflect in the status label below.
         m_audioRecorder->startRecording(m_currentRecordingPath, getFileFormat(), getAudioCodec());
+
+        if (!m_audioRecorder->isRecording())
+        {
+            m_statusLabel->setText("Recording not started: microphone not activated");
+            m_statusLabel->setStyleSheet("font-size: 14pt; font-weight: bold; color: #D32F2F;");
+            return;
+        }
     }
     else
     {
+        bool cameraReady = m_videoRecorder->isCameraActive();
+        if (!cameraReady)
+            cameraReady = m_videoRecorder->initializeCamera();
+
+        if (!cameraReady)
+        {
+            m_statusLabel->setText("Recording not started: camera not activated");
+            m_statusLabel->setStyleSheet("font-size: 14pt; font-weight: bold; color: #D32F2F;");
+            return;
+        }
+
         QMediaRecorder::Quality quality = static_cast<QMediaRecorder::Quality>(
             m_qualitySelector->currentData().toInt());
         m_videoRecorder->startRecording(m_currentRecordingPath, getFileFormat(), getVideoCodec(), quality);
+
+        if (!m_videoRecorder->isRecording())
+        {
+            m_statusLabel->setText("Recording not started: camera not activated");
+            m_statusLabel->setStyleSheet("font-size: 14pt; font-weight: bold; color: #D32F2F;");
+            return;
+        }
     }
 
+    // Only reaches here if recording actually started successfully
     m_recordButton->setEnabled(false);
     m_stopButton->setEnabled(true);
     m_saveButton->setEnabled(false);
     m_statusLabel->setText("Recording...");
     m_statusLabel->setStyleSheet("font-size: 14pt; font-weight: bold; color: red;");
 }
-
 void NestedRecordingTabs::stopRecording()
 {
     if (m_mode == Mode::Audio)
@@ -201,6 +231,19 @@ void NestedRecordingTabs::stopRecording()
     m_saveButton->setEnabled(true);
     m_statusLabel->setText("Recording stopped");
     m_statusLabel->setStyleSheet("font-size: 14pt; font-weight: bold; color: orange;");
+}
+
+// New: resets buttons without overwriting an error message already shown
+void NestedRecordingTabs::stopRecordingAfterError()
+{
+    if (m_mode == Mode::Audio)
+        m_audioRecorder->stopRecording();
+    else
+        m_videoRecorder->stopRecording();
+
+    m_recordButton->setEnabled(true);
+    m_stopButton->setEnabled(false);
+    m_saveButton->setEnabled(false); // nothing valid was recorded, don't offer to save it
 }
 
 void NestedRecordingTabs::saveRecording()
@@ -263,7 +306,13 @@ void NestedRecordingTabs::onDurationChanged(qint64 duration)
 void NestedRecordingTabs::onRecordingError(const QString &error)
 {
     QString title = (m_mode == Mode::Audio) ? "Recording Error" : "Video Recording Error";
+    QString deviceLabel = (m_mode == Mode::Audio) ? "Microphone" : "Camera";
+
     QMessageBox::critical(this, title, QString("An error occurred: %1").arg(error));
+
+    m_statusLabel->setText(QString("%1 not activated: %2").arg(deviceLabel, error));
+    m_statusLabel->setStyleSheet("font-size: 14pt; font-weight: bold; color: #D32F2F;");
+
     stopRecording();
 }
 

@@ -16,6 +16,9 @@ MainTabs::MainTabs(QWidget *parent, std::shared_ptr<SQLite> database,
                    const QString &storageDirectory)
     : QTabWidget(parent), m_database(database), m_storageDirectory(storageDirectory)
 {
+    m_videoRecorder = new VideoRecorder(this);
+    m_audioRecorder = new AudioRecorder(this);
+
     m_player = new QMediaPlayer(this);
     m_audioOutput = new QAudioOutput(this);
     m_player->setAudioOutput(m_audioOutput);
@@ -33,6 +36,14 @@ MainTabs::~MainTabs()
 
 void MainTabs::setupUI()
 {
+    // --- Controller tab (new, first tab) ---
+    m_controllerTab = new ControllerTab(this, m_videoRecorder, m_audioRecorder);
+    connect(m_controllerTab, &ControllerTab::requestCameraPermission,
+            this, &MainTabs::cameraPermissionRequested);
+    connect(m_controllerTab, &ControllerTab::requestMicrophonePermission,
+            this, &MainTabs::microphonePermissionRequested);
+    addTab(m_controllerTab, "Controller");
+
     // --- Recording tab ---
     m_recordingTab = new QWidget;
     QVBoxLayout *recordingLayout = new QVBoxLayout(m_recordingTab);
@@ -40,8 +51,12 @@ void MainTabs::setupUI()
     QTabWidget *recordingInnerTabs = new QTabWidget;
     recordingLayout->addWidget(recordingInnerTabs);
 
-    m_audioRecordingTab = new NestedRecordingTabs(this, m_database, m_storageDirectory, NestedRecordingTabs::Mode::Audio);
-    m_videoRecordingTab = new NestedRecordingTabs(this, m_database, m_storageDirectory, NestedRecordingTabs::Mode::Video);
+    m_audioRecordingTab = new NestedRecordingTabs(this, m_database, m_storageDirectory,
+                                                  NestedRecordingTabs::Mode::Audio,
+                                                  nullptr, m_audioRecorder);
+    m_videoRecordingTab = new NestedRecordingTabs(this, m_database, m_storageDirectory,
+                                                  NestedRecordingTabs::Mode::Video,
+                                                  m_videoRecorder, m_audioRecorder);
 
     recordingInnerTabs->addTab(m_audioRecordingTab, "Audio Recording");
     recordingInnerTabs->addTab(m_videoRecordingTab, "Video Recording");
@@ -174,10 +189,20 @@ void MainTabs::setupUI()
     addTab(m_storageTab, "Storage");
 }
 
-void MainTabs::initializeCamera()
+void MainTabs::onCameraPermissionResult(bool granted)
 {
-    m_videoRecordingTab->initializeCamera();
+    m_controllerTab->onCameraPermissionResult(granted);
 }
+
+void MainTabs::onMicrophonePermissionResult(bool granted)
+{
+    m_controllerTab->onMicrophonePermissionResult(granted);
+}
+
+// void MainTabs::initializeCamera()
+// {
+//     m_videoRecordingTab->initializeCamera();
+// }
 
 // ─── Playback ─────────────────────────────────────────────────────────────────
 
