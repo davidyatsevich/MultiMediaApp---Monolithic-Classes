@@ -69,58 +69,72 @@ add_executable(MultiMediaApp
 # macOS
 # --------------------------------------------------
 if(APPLE)
-   set_target_properties(MultiMediaApp PROPERTIES
-       MACOSX_BUNDLE TRUE
-       MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist"
-   )
+    set_target_properties(MultiMediaApp PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist"
+    )
 
+    target_link_libraries(MultiMediaApp PRIVATE
+        Qt6::Core
+        Qt6::Widgets
+        Qt6::Multimedia
+        Qt6::MultimediaWidgets
+        Qt6::Sql
+        $ENV{HOME}/Qt/6.11.0/macos/plugins/permissions/libqdarwincamerapermission.a
+        $ENV{HOME}/Qt/6.11.0/macos/plugins/permissions/libqdarwinmicrophonepermission.a
+        "-framework Cocoa"
+        "-framework AVFoundation"
+        "-framework CoreMedia"
+        "-framework CoreVideo"
+        "-framework CoreFoundation"
+    )
 
-   target_link_libraries(MultiMediaApp PRIVATE
-       Qt6::Core
-       Qt6::Widgets
-       Qt6::Multimedia
-       Qt6::MultimediaWidgets
-       Qt6::Sql
-       $ENV{HOME}/Qt/6.11.0/macos/plugins/permissions/libqdarwincamerapermission.a
-       $ENV{HOME}/Qt/6.11.0/macos/plugins/permissions/libqdarwinmicrophonepermission.a
-       "-framework Cocoa"      
-       "-framework AVFoundation"
-       "-framework CoreMedia"
-       "-framework CoreVideo"
-       "-framework CoreFoundation"
-   )
+    target_link_options(MultiMediaApp PRIVATE
+        "-Wl,-u,_QDarwinCameraPermissionRequest"
+        "-Wl,-u,_QDarwinMicrophonePermissionRequest"
+    )
 
+    add_custom_command(TARGET MultiMediaApp POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist"
+            "$<TARGET_BUNDLE_CONTENT_DIR:MultiMediaApp>/Info.plist"
+        COMMENT "Copying Info.plist into bundle"
+        VERBATIM
+    )
 
-   target_link_options(MultiMediaApp PRIVATE
-       "-Wl,-u,_QDarwinCameraPermissionRequest"
-       "-Wl,-u,_QDarwinMicrophonePermissionRequest"
-   )
+# --------------------------------------------------
+# Windows
+# --------------------------------------------------
+elseif(WIN32)
+    message(STATUS "Configuring for Windows")
 
+    target_link_libraries(MultiMediaApp PRIVATE
+        Qt6::Core
+        Qt6::Widgets
+        Qt6::Multimedia
+        Qt6::MultimediaWidgets
+        Qt6::Sql
+    )
 
-   add_custom_command(TARGET MultiMediaApp POST_BUILD
-       COMMAND ${CMAKE_COMMAND} -E copy_if_different
-           "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist"
-           "$<TARGET_BUNDLE_CONTENT_DIR:MultiMediaApp>/Info.plist"
-       COMMENT "Copying Info.plist into bundle"
-       VERBATIM
-   )
+    set_target_properties(MultiMediaApp PROPERTIES
+        WIN32_EXECUTABLE TRUE
+    )
 
+    install(TARGETS MultiMediaApp RUNTIME DESTINATION bin)
 
 # --------------------------------------------------
 # Linux (Ubuntu, Fedora, any distro)
 # --------------------------------------------------
 elseif(UNIX AND NOT APPLE)
-   message(STATUS "Configuring for Linux")
+    message(STATUS "Configuring for Linux")
 
+    target_link_libraries(MultiMediaApp PRIVATE
+        Qt6::Core
+        Qt6::Widgets
+        Qt6::Multimedia
+        Qt6::MultimediaWidgets
+        Qt6::Sql
+    )
 
-   target_link_libraries(MultiMediaApp PRIVATE
-       Qt6::Core
-       Qt6::Widgets
-       Qt6::Multimedia
-       Qt6::MultimediaWidgets
-       Qt6::Sql
-   )
-
-
-   install(TARGETS MultiMediaApp RUNTIME DESTINATION bin)
+    install(TARGETS MultiMediaApp RUNTIME DESTINATION bin)
 endif()

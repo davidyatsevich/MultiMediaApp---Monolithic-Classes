@@ -14,6 +14,12 @@ mkdir -p "$BUILD_DIR"
 echo "=== Configuring ==="
 if [ "$PLATFORM" = "Darwin" ]; then
     CMAKE_PREFIX="$HOME/Qt/6.11.0/macos"
+elif [[ "$PLATFORM" == MINGW* || "$PLATFORM" == MSYS* ]]; then
+    if [ -d "$HOME/Qt/6.11.0/mingw_64" ]; then
+        CMAKE_PREFIX="$HOME/Qt/6.11.0/mingw_64"
+    else
+        CMAKE_PREFIX="$HOME/Qt/6.10.2/mingw_64"
+    fi
 elif [ -d "$HOME/Qt/6.10.2/gcc_arm64" ]; then
     CMAKE_PREFIX="$HOME/Qt/6.10.2/gcc_arm64"
 else
@@ -27,6 +33,8 @@ cmake -S "$PROJECT_DIR" -B "$BUILD_DIR" \
 echo "=== Building ==="
 if [ "$PLATFORM" = "Darwin" ]; then
     cmake --build "$BUILD_DIR" --config Release -j$(sysctl -n hw.logicalcpu)
+elif [[ "$PLATFORM" == MINGW* || "$PLATFORM" == MSYS* ]]; then
+    cmake --build "$BUILD_DIR" --config Release -j$(nproc)
 else
     cmake --build "$BUILD_DIR" --config Release -j$(nproc)
 fi
@@ -34,6 +42,8 @@ fi
 echo "=== Deploying ==="
 if [ "$PLATFORM" = "Darwin" ]; then
     bash "$PROJECT_DIR/Scripts/deploy_macos.sh"
+elif [[ "$PLATFORM" == MINGW* || "$PLATFORM" == MSYS* ]]; then
+    bash "$PROJECT_DIR/Scripts/deploy_windows.sh"
 else
     bash "$PROJECT_DIR/Scripts/deploy_linux.sh"
 fi

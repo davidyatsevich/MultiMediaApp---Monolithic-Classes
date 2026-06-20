@@ -56,6 +56,10 @@ static QString detectDistro()
 }
 #endif
 
+#ifdef _WIN32
+#include <QSysInfo>
+#endif
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
@@ -88,6 +92,15 @@ int main(int argc, char *argv[])
     QString iconOn = QCoreApplication::applicationDirPath() + "/AppIconOn.png";
     app.setWindowIcon(QIcon(iconOn));
     // No explicit restore needed — process exit clears it automatically
+#elif defined(_WIN32)
+    qDebug("Platform : Windows (%s)", qPrintable(QSysInfo::prettyProductName()));
+    qDebug("Backend  : WMF (Windows Media Foundation)");
+
+    // Windows has no Dock; the taskbar icon is set per-window via setWindowIcon.
+    // Unlike macOS, there's no separate "running" vs "not running" Dock state to
+    // restore on quit — the OS simply stops showing the icon when the process exits.
+    const QString iconOn = QCoreApplication::applicationDirPath() + "/AppIconOn.png";
+    app.setWindowIcon(QIcon(iconOn));
 #endif
 
     MainWindow window;
