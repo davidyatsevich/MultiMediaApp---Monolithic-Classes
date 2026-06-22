@@ -14,11 +14,11 @@ $InstallDir  = Join-Path $ProjectDir "Installation"
 # Detect Qt install
 # --------------------------------------------------
 $QtCandidates = @(
-    "$env:USERPROFILE\Qt\6.11.1\msvc2022_64",
-    "$env:USERPROFILE\Qt\6.11.0\msvc2022_64",
-    "$env:USERPROFILE\Qt\6.10.2\msvc2022_64",
-    "$env:USERPROFILE\Qt\6.11.1\msvc2022_arm64",
-    "$env:USERPROFILE\Qt\6.11.0\msvc2022_arm64"
+    "C:\Qt\6.11.1\msvc2022_64",
+    "C:\Qt\6.11.0\msvc2022_64",
+    "C:\Qt\6.10.2\msvc2022_64",
+    "C:\Qt\6.11.1\msvc2022_arm64",
+    "C:\Qt\6.11.0\msvc2022_arm64"
 )
 
 $Qt = $QtCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
