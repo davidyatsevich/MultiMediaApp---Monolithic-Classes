@@ -111,7 +111,7 @@ if (-not $MakeNsis) {
 if ($MakeNsis) {
     Write-Host "=== Building NSIS installer ==="
     $NsiScript = Join-Path $BuildDir "$AppName.nsi"
-    $SetupOut  = Join-Path $InstallDir "$AppName-Setup.exe"
+    $SetupOut  = Join-Path $InstallDir "$AppName-Setup-Windows.exe"
 
     $nsiContent = @"
 !define APP_NAME "$AppName"
@@ -127,14 +127,14 @@ Page directory
 Page instfiles
 
 Section "Install"
-    SetOutPath "`$INSTDIR"
+    SetOutPath "\$INSTDIR"
     File /r "$AppDir\*.*"
 
-    CreateDirectory "`$SMPROGRAMS\`${APP_NAME}"
-    CreateShortcut "`$SMPROGRAMS\`${APP_NAME}\`${APP_NAME}.lnk" "`$INSTDIR\`${APP_EXE}"
-    CreateShortcut "`$DESKTOP\`${APP_NAME}.lnk" "`$INSTDIR\`${APP_EXE}"
+    CreateDirectory "\$SMPROGRAMS\\\${APP_NAME}"
+    CreateShortcut "\$SMPROGRAMS\\\${APP_NAME}\\\${APP_NAME}.lnk" "\$INSTDIR\\\${APP_EXE}" "" "\$INSTDIR\\AppIcon.ico"
+    CreateShortcut "\$DESKTOP\\\${APP_NAME}.lnk" "\$INSTDIR\\\${APP_EXE}" "" "\$INSTDIR\\AppIcon.ico"
 
-    WriteUninstaller "`$INSTDIR\Uninstall.exe"
+    WriteUninstaller "\$INSTDIR\\Uninstall.exe"
 SectionEnd
 
 Section "Uninstall"
