@@ -1,6 +1,9 @@
 #include <QtTest/QtTest>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QMediaDevices>
+#include <QAudioDevice>
+#include <QAudioInput>
 #include "Recorders.hpp"
 
 class TestAudioRecorder : public QObject
@@ -8,10 +11,10 @@ class TestAudioRecorder : public QObject
     Q_OBJECT
 
 private:
-    AudioRecorder* m_recorder;
-    QTemporaryDir  m_tempDir;
+    AudioRecorder *m_recorder;
+    QTemporaryDir m_tempDir;
 
-    QString tempPath(const QString& name) const
+    QString tempPath(const QString &name) const
     {
         return m_tempDir.filePath(name);
     }
@@ -22,6 +25,10 @@ private slots:
     void init()
     {
         m_recorder = new AudioRecorder(this);
+    }
+    bool hasAudioInput() const
+    {
+        return !QMediaDevices::audioInputs().isEmpty();
     }
 
     void cleanup()
@@ -44,6 +51,9 @@ private slots:
     // ── startRecording ────────────────────────────────────────
     void test_startRecording_setsIsRecordingTrue()
     {
+        if (!hasAudioInput())
+            QSKIP("No microphone available on this machine — skipping");
+
         m_recorder->startRecording(
             tempPath("test.m4a"),
             QMediaFormat::MPEG4,
@@ -55,6 +65,9 @@ private slots:
 
     void test_startRecording_whenAlreadyRecording_isNoOp()
     {
+        if (!hasAudioInput())
+            QSKIP("No microphone available on this machine — skipping");
+
         m_recorder->startRecording(
             tempPath("test1.m4a"),
             QMediaFormat::MPEG4,
@@ -73,6 +86,9 @@ private slots:
     // ── stopRecording ─────────────────────────────────────────
     void test_stopRecording_setsIsRecordingFalse()
     {
+        if (!hasAudioInput())
+            QSKIP("No microphone available on this machine — skipping");
+
         m_recorder->startRecording(
             tempPath("test.m4a"),
             QMediaFormat::MPEG4,
@@ -91,6 +107,9 @@ private slots:
 
     void test_stopRecording_emitsRecordingStoppedSignal()
     {
+        if (!hasAudioInput())
+            QSKIP("No microphone available on this machine — skipping");
+
         QSignalSpy spy(m_recorder, &AudioRecorder::recordingStopped);
 
         m_recorder->startRecording(
@@ -112,6 +131,9 @@ private slots:
     // ── recordingStopped signal ───────────────────────────────
     void test_recordingStopped_emittedExactlyOnce_perSession()
     {
+        if (!hasAudioInput())
+            QSKIP("No microphone available on this machine — skipping");
+
         QSignalSpy spy(m_recorder, &AudioRecorder::recordingStopped);
 
         m_recorder->startRecording(
@@ -133,6 +155,9 @@ private slots:
     // ── durationChanged signal ────────────────────────────────
     void test_durationChanged_emittedDuringRecording()
     {
+        if (!hasAudioInput())
+            QSKIP("No microphone available on this machine — skipping");
+
         QSignalSpy spy(m_recorder, &AudioRecorder::durationChanged);
 
         m_recorder->startRecording(
@@ -149,6 +174,9 @@ private slots:
 
     void test_durationChanged_valueIsNonNegative()
     {
+        if (!hasAudioInput())
+            QSKIP("No microphone available on this machine — skipping");
+
         QSignalSpy spy(m_recorder, &AudioRecorder::durationChanged);
 
         m_recorder->startRecording(
@@ -159,7 +187,8 @@ private slots:
         spy.wait(2000);
         m_recorder->stopRecording();
 
-        for (const QList<QVariant>& args : spy) {
+        for (const QList<QVariant> &args : spy)
+        {
             qint64 duration = args.at(0).toLongLong();
             QVERIFY(duration >= 0);
         }
@@ -168,6 +197,9 @@ private slots:
     // ── Format variations ─────────────────────────────────────
     void test_startRecording_mp3Format_doesNotCrash()
     {
+        if (!hasAudioInput())
+            QSKIP("No microphone available on this machine — skipping");
+
         m_recorder->startRecording(
             tempPath("test.mp3"),
             QMediaFormat::MP3,
@@ -179,6 +211,9 @@ private slots:
 
     void test_startRecording_wavFormat_doesNotCrash()
     {
+        if (!hasAudioInput())
+            QSKIP("No microphone available on this machine — skipping");
+
         m_recorder->startRecording(
             tempPath("test.wav"),
             QMediaFormat::Wave,
@@ -191,6 +226,9 @@ private slots:
     // ── Destructor safety ─────────────────────────────────────
     void test_destructor_whileRecording_doesNotCrash()
     {
+        if (!hasAudioInput())
+            QSKIP("No microphone available on this machine — skipping");
+
         // Create a recorder, start it, then let it go out of scope
         // The destructor should call stopRecording() safely
         {
@@ -207,7 +245,11 @@ private slots:
     // ── Start / stop cycles ───────────────────────────────────
     void test_multipleStartStop_cycles_stateIsConsistent()
     {
-        for (int i = 0; i < 3; ++i) {
+        if (!hasAudioInput())
+            QSKIP("No microphone available on this machine — skipping");
+
+        for (int i = 0; i < 3; ++i)
+        {
             m_recorder->startRecording(
                 tempPath(QString("cycle%1.m4a").arg(i)),
                 QMediaFormat::MPEG4,
