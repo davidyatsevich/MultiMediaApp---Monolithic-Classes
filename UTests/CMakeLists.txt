@@ -87,3 +87,10 @@ add_qt_test(TestSQLiteFileIntegration
     TestSQLiteFileIntegration.cpp
     ${BACKEND_SOURCES}
 )
+
+# GUI component: ControllerTab — tests logic without showing UI
+add_qt_test(TestControllerTab
+    TestControllerTab.cpp
+    ${BACKEND_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../GUI/ControllerTab.cpp
+)
